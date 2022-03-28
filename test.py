@@ -1,3 +1,6 @@
+
+from dataclasses import replace
+from unittest import result
 from numpy import extract
 import requests
 import pdfplumber
@@ -14,6 +17,7 @@ def download_file(url):
 
     return local_filename
 
+
 ##############################
 # Working Navigation
 ##############################
@@ -29,12 +33,12 @@ def download_file(url):
 
 # extracted
 
-
 fund = "TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf"
 
+page = 391
 
 with pdfplumber.open(fund) as pdf:
-    page = pdf.pages[391]
+    page = pdf.pages[int(page) + 2]
     text = page.extract_text().split('\n')
 
 # text[12].split('EUR')
@@ -45,24 +49,74 @@ with pdfplumber.open(fund) as pdf:
 
 
 currency = ['EUR', 'DKK', 'USD']
-
+totalDelimiter = ['TOTAL', 'Total']
 securities = []
 
-for i in currency:
-    for j in text:
-        if i in j:
-            divideTranche = j.replace(i, '| ')
-            print(divideTranche)
+equities = []
 
 
 for i in text:
-    result = [ele for ele in currency if (ele in i)]
-    for j in result:
-        divideTranche = i.replace(j, '| ')
-        splitTranche = divideTranche.split('| ')
-        print(result)
 
+    cur = [ele for ele in currency if (ele in i)]
+    element = {}
+
+    if len(cur) == 0:
+        continue
+
+    elif len(cur) == 1:
+
+        if any(str in i for str in totalDelimiter):
+
+            replacedWord = i.replace('Total', 'TOTAL')
+
+            if replacedWord.index('TOTAL') == 0:
+
+                splitWord = replacedWord.split(cur[0])[1]
+                splitValues = splitWord.split(' ')
+                element['Currency'] = cur[0]
+                element['Quantity'] = splitValues[0]
+                element['Entity'] = splitValues[1]
+                element['Market Value'] = splitValues[2]
+
+            else:
+
+                splitWord = replacedWord.split('TOTAL')[0]
+                splitWordCur = splitWord.split(cur[0])[1]
+                splitValues = splitWordCur.split(' ')
+                element['Currency'] = cur[0]
+                element['Quantity'] = splitValues[0]
+                element['Entity'] = splitValues[1]
+                element['Market Value'] = splitValues[2]
+
+        else:
+            splitCur = i.split(cur[0])[1:]
+            for k in splitCur:
+                splitValues = k.split(' ')
+                element['Currency'] = cur[0]
+                element['Quantity'] = splitValues[0]
+                element['Entity'] = splitValues[1]
+                element['Market Value'] = splitValues[2]
+
+
+    equities.append(element)
+
+    else:
         
 
+        
+for i in text:
+    cur = [ele for ele in currency if (ele in i)]
+    element = {}
+    print(cur)
 
+    if len(cur) == 0:
+        continue
 
+    elif len(cur) == 1:
+        continue
+    else:
+        print(len(cur))
+        for l in cur:
+            curRef = len(cur)
+
+            
