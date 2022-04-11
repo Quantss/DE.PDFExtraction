@@ -7,37 +7,16 @@ import pdfplumber
 import pandas as pd
 
 
-def download_file(url):
-    local_filename = url.split('/')[-1]
-
-    # with requests.get(url) as r:
-    #     r.raise_for_status()
-    #     with open(local_filename, 'wb') as f:
-    #         f.write(r.content)
-
-    return local_filename
-
-
 ##############################
 # Working Navigation
 ##############################
-
-
-# import PyPDF2
-
-# with open("TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf", 'rb') as pdfFile:
-#     pdfReader = PyPDF2.PdfFileReader(pdfFile)
-
-#     pdfPage = pdfReader.getPage(394)
-#     extracted = pdfPage.extractText()
-
-# extracted
 
 fund = "TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf"
 
 page = 391
 
 with pdfplumber.open(fund) as pdf:
+    # page = pdf.pages[int(page)]
     page = pdf.pages[int(page) + 2]
     text = page.extract_text().split('\n')
 
@@ -60,10 +39,16 @@ for i in text:
     cur = [ele for ele in currency if (ele in i)]
     element = {}
 
+    # handling empty rows
+
     if len(cur) == 0:
         continue
 
+    # If the row isn't empty (has at least one currency list)
+
     elif len(cur) == 1:
+
+        # Removing 'Total row'
 
         if any(str in i for str in totalDelimiter):
 
@@ -97,26 +82,41 @@ for i in text:
                 element['Entity'] = splitValues[1]
                 element['Market Value'] = splitValues[2]
 
+# handling multiple currenies
+    
+    else:
+
+        curCopy = cur
+
+        while len(curCopy) != 0:
+
+            for l in cur:
+
+                replaceCur = i.replace(l, '| ')
+
+                curCopy.remove(l)
 
     equities.append(element)
 
-    else:
-        
 
-        
+
+#######################################
+# Fund Search
+#######################################
+
+
+fund = "TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf"
+
+page = [0, 1, 2]
+
+with pdfplumber.open(fund) as pdf:
+    page = pdf.pages[int(page) + 2]
+    text = page.extract_text().split('\n')
+
+fundType = ['ETF', 'Equity']
+
 for i in text:
-    cur = [ele for ele in currency if (ele in i)]
-    element = {}
-    print(cur)
-
-    if len(cur) == 0:
-        continue
-
-    elif len(cur) == 1:
-        continue
-    else:
-        print(len(cur))
-        for l in cur:
-            curRef = len(cur)
-
-            
+    if 'StateStreet' in i:
+        splitPage = (i.split(' '))
+        pageSearch = splitPage[1]
+        print(page)
