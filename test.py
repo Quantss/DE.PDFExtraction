@@ -5,7 +5,7 @@ from numpy import extract
 import requests
 import pdfplumber
 import pandas as pd
-
+import re
 
 ##############################
 # Working Navigation
@@ -22,12 +22,50 @@ with pdfplumber.open(fund) as pdf:
 
 # text[12].split('EUR')
 
+#######################################
+# Fund Search
+#######################################
+
+
+report = "TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf"
+
+page = 0
+
+pages = [0, 1, 2, 3]
+
+# fundType = ['ETF', 'Equity']
+
+funds = []
+
+
+for page in pages:
+    with pdfplumber.open(report) as pdf:
+        text = pdf.pages[page].extract_text().split('\n')
+
+        for i in text:
+            fund = {}
+            if 'Table of Contents' not in i:
+                pass
+                if 'Equity' in i:
+                    splitPage = (i.split(' '))
+                    name = splitPage[0]
+                    pageSearch = splitPage[1]
+                    # name = re.findall('[A-Z][^A-Z]*', name)
+                    # # fundName = ' '.join(name)
+                    #
+                    fund['Name'] = name
+
+                    fund['Page#'] = pageSearch
+
+                    funds.append(fund)
+
+
 ##############################
 # Extraction
 ##############################
 
 
-currency = ['EUR', 'DKK', 'USD']
+currency = ['EUR', 'DKK', 'USD', 'MYR', 'PHP', 'PLN', 'PKR', 'MXN', 'AUD']
 totalDelimiter = ['TOTAL', 'Total']
 securities = []
 
@@ -83,7 +121,7 @@ for i in text:
                 element['Market Value'] = splitValues[2]
 
 # handling multiple currenies
-    
+
     else:
 
         curCopy = cur
@@ -97,26 +135,3 @@ for i in text:
                 curCopy.remove(l)
 
     equities.append(element)
-
-
-
-#######################################
-# Fund Search
-#######################################
-
-
-fund = "TestFiles\SEMREP-2021-06-30-EN-00-2021-08-25-106347697 - LUX.pdf"
-
-page = [0, 1, 2]
-
-with pdfplumber.open(fund) as pdf:
-    page = pdf.pages[int(page) + 2]
-    text = page.extract_text().split('\n')
-
-fundType = ['ETF', 'Equity']
-
-for i in text:
-    if 'StateStreet' in i:
-        splitPage = (i.split(' '))
-        pageSearch = splitPage[1]
-        print(page)
